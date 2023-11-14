@@ -55,10 +55,12 @@ namespace iikoPluginTask.Observables
         }
         public void OnCompleted()
         {
+            PluginContext.Log.Info("Reserve Reporter completed reporting!");
         }
 
         public void OnError(Exception error)
         {
+            PluginContext.Log.Error($"{error.Message}");
         }
     }
 }

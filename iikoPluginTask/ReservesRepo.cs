@@ -23,6 +23,10 @@ internal class ReservesRepo
         reserveCollection = new Dictionary<Guid, Reserve>();
     }
 
+    /// <summary>
+    /// Создает или редактирует бронирование в iiko, в зависимости от наличия <paramref name="reserveFromIiko"/> в коллекции бронирований плагина
+    /// </summary>
+    /// <param name="reserveFromIiko"></param>
     public void AddOrUpdate(IReserve reserveFromIiko)
     {
         if (reserveCollection.TryGetValue(reserveFromIiko.Id, out var reserveFromCollection))
@@ -39,7 +43,7 @@ internal class ReservesRepo
             {
                 logger.LogReserve(reserveFromIiko);
                 Reserve reserve = new Reserve(reserveFromIiko);
-                UpdateReserve(reserve);
+                UpdateIikoReserve(reserve);
                 reserveCollection.Remove(reserveFromIiko.Id);
                 reserveCollection.Add(reserveFromIiko.Id, reserve);
             }
@@ -48,10 +52,15 @@ internal class ReservesRepo
         {
             Reserve reserve = new Reserve(reserveFromIiko);
             reserveCollection.Add(reserveFromIiko.Id, reserve);
-            UpdateReserve(reserve);
+            UpdateIikoReserve(reserve);
         }
     }
-    public void UpdateReserve(Reserve handledReservation)
+
+    /// <summary>
+    /// Уведомляет iiko о изменении <paramref name="handledReservation"/> через WebSocket
+    /// </summary>
+    /// <param name="handledReservation"></param>
+    private void UpdateIikoReserve(Reserve handledReservation)
     {
         const string startTimeFormat = "yyyy-MM-ddTHH:mm:sszzzz";
         IReserve reserveFromIiko = PluginContext.Operations.GetReserveById(handledReservation.Id);
@@ -70,48 +79,55 @@ internal class ReservesRepo
             PluginContext.Operations.SubmitChanges(credentials, editSession);
             return;
         }
-        string Status = null;
-        string ClosingTime = null;
-        string StartTime = ((!handledReservation.GuestsComingTime.HasValue) ? null : ((handledReservation.GuestsComingTime.Value < DateTime.Now) ? handledReservation.GuestsComingTime.Value.ToString(startTimeFormat) : DateTime.Now.AddSeconds(5.0).ToString(startTimeFormat)));
-        if (handledReservation.Status == ReserveStatus.New)
+        string status = null;
+        string startTime;
+        if (handledReservation.GuestsComingTime.Value < DateTime.Now)
         {
-            Status = "other";
+            startTime=(!handledReservation.GuestsComingTime.HasValue) ? null : (handledReservation.GuestsComingTime.Value.ToString(startTimeFormat));
         }
-        else if ((int)handledReservation.Status == 1)
+        else
         {
-            Status = "come";
+            startTime=(!handledReservation.GuestsComingTime.HasValue) ? null : (DateTime.Now.AddSeconds(5.0).ToString(startTimeFormat));
         }
-        else if ((int)handledReservation.Status == 2)
+
+        switch (handledReservation.Status)
         {
-            Status = "cancel";
+            case ReserveStatus.New:
+                status = "other";
+                break;
+            case ReserveStatus.Started:
+                status = "come";
+                break;
+            case ReserveStatus.Closed:
+                status = "cancel";
+                break;
         }
-        string IsRemind = ((!handledReservation.ShouldRemind) ? "0" : "1");
-        _ = handledReservation.Client.CardNumber;
+
+        string isRemind = (!handledReservation.ShouldRemind) ? "0" : "1";
         List<string> tableGuids = new List<string>();
-        foreach (ITable _TableGuids in handledReservation.Tables)
-        {
-            tableGuids.Add(_TableGuids.Id.ToString());
-        }
+        foreach (ITable table in handledReservation.Tables)
+            tableGuids.Add(table.Id.ToString());
+
         Guest guest = new Guest(handledReservation);
         ChangedReservation changedReservationstoSend = new ChangedReservation
         {
             Guid = handledReservation.Id.ToString(),
             Date = handledReservation.EstimatedStartTime.ToString(startTimeFormat),
             RegisterTime = DateTime.Now.ToString(startTimeFormat),
-            ComingTime = StartTime,
-            ClosingTime = ClosingTime,
+            ComingTime = startTime,
+            ClosingTime = null,
             Guest = guest,
             Duration = handledReservation.Duration.TotalMinutes.ToString(),
             Number = "1",
             Type = "reserve",
             GuestCount = handledReservation.GuestsCount.ToString(),
-            Status = Status,
+            Status = status,
             Comment = handledReservation.Comment,
             TablesGUIDs = tableGuids,
-            IsRemind = IsRemind,
+            IsRemind = isRemind,
             CancelReason = ""
         };
-        RpcRequestConstructor<ChangedReservation> ReserveChangedJson = new RpcRequestConstructor<ChangedReservation>("UpdateReserve", changedReservationstoSend);
-        WebSocketClient.GetInstance().SendAndLog("UpdateReserve", ReserveChangedJson.ResultRequest);
+        RpcRequestConstructor<ChangedReservation> ReserveChangedJson = new RpcRequestConstructor<ChangedReservation>("UpdateIikoReserve", changedReservationstoSend);
+        WebSocketClient.GetInstance().SendAndLog("UpdateIikoReserve", ReserveChangedJson.ResultRequest);
     }
 }

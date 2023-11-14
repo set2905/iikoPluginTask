@@ -72,6 +72,7 @@
     <Compile Include="DTO\Guest.cs" />
     <Compile Include="DTO\Reserve.cs" />
     <Compile Include="DTO\Constructor\RpcRequestConstructor.cs" />
+    <Compile Include="Logging\PluginLogger.cs" />
     <Compile Include="Observables\ReserveReporter.cs" />
     <Compile Include="Plugin\ReservePlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

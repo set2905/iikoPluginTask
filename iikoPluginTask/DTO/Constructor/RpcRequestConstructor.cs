@@ -6,8 +6,6 @@ namespace iikoPluginTask.DTO
 {
     internal class RpcRequestConstructor<T>
     {
-        private string _method { get; set; }
-
         public string ResultRequest { get; set; }
 
         public RpcRequestConstructor(string _method, T _params)
