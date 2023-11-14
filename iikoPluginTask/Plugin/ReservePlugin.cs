@@ -40,19 +40,19 @@ namespace iikoPluginTask
                     }
                     if (!reserve.Entity.GuestsComingTime.HasValue || !(Math.Abs((reserve.Entity.GuestsComingTime.Value - DateTime.Now).TotalSeconds) < 2.5))
                     {
-                        if (reserve.Entity.Order != null)
-                        {
-                            _reservedOrders.Add(((IEntity)reserve.Entity.Order).Id);
-                        }
-                        ReservesWithCreationTime.AddOrUpdate(((IEntity)reserve.Entity).Id, DateTime.Now);
+                        //if (reserve.Entity.Order != null)
+                        //{
+                        //    _reservedOrders.Add(((IEntity)reserve.Entity.Order).Id);
+                        //}
+                        //ReservesWithCreationTime.AddOrUpdate(((IEntity)reserve.Entity).Id, DateTime.Now);
                         reservesRepo.AddOrUpdate(reserve.Entity);
                     }
                 }
                 else if ((int)reserve.Entity.Status != 2)
                 {
-                    ReservesWithCreationTime.AddOrUpdate(((IEntity)reserve.Entity).Id, DateTime.Now);
+                    //ReservesWithCreationTime.AddOrUpdate(((IEntity)reserve.Entity).Id, DateTime.Now);
                     reservesRepo.AddOrUpdate(reserve.Entity);
-                    _timeLastReserve = DateTime.Now;
+                    //_timeLastReserve = DateTime.Now;
                 }
             }
             catch (Exception ex)
