@@ -10,20 +10,12 @@ namespace iikoPluginTask.Observables
     public class ReserveReporter : IObserver<EntityChangedEventArgs<IReserve>>
     {
         private Dictionary<Guid, DateTime> ReserveTimes { get; set; }
+        private ReservesRepo reservesRepo { get; set; }
 
         public ReserveReporter()
         {
             reservesRepo=new ReservesRepo();
-        }
-
-        private ReservesRepo reservesRepo { get; set; }
-
-        public void OnCompleted()
-        {
-        }
-
-        public void OnError(Exception error)
-        {
+            ReserveTimes = new Dictionary<Guid, DateTime>();
         }
 
         public void OnNext(EntityChangedEventArgs<IReserve> value)
@@ -60,6 +52,13 @@ namespace iikoPluginTask.Observables
             {
                 PluginContext.Log.Error($"{ex.Message}");
             }
+        }
+        public void OnCompleted()
+        {
+        }
+
+        public void OnError(Exception error)
+        {
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Resto.Front.Api.Data.Brd;
-using Resto.Front.Api.Data.Common;
 using Resto.Front.Api.Data.Organization.Sections;
 using Resto.Front.Api;
 using System.Linq;
@@ -11,50 +10,35 @@ using Resto.Front.Api.Data.Security;
 using Resto.Front.Api.Editors.Stubs;
 using Resto.Front.Api.Editors;
 using iikoPluginTask.DTO.Constructor;
+using iikoPluginTask.Logging;
 
 internal class ReservesRepo
 {
-    public Dictionary<Guid, Reserve> ReserveCollection { get; set; }
+    private Dictionary<Guid, Reserve> reserveCollection;
+    private PluginLogger logger;
+
+    public ReservesRepo()
+    {
+        logger = new PluginLogger();
+        reserveCollection = new Dictionary<Guid, Reserve>();
+    }
+
     public void AddOrUpdate(IReserve reserveFromIiko)
     {
-        if (ReserveCollection.TryGetValue(reserveFromIiko.Id, out var reserveFromCollection))
+        if (reserveCollection.TryGetValue(reserveFromIiko.Id, out var reserveFromCollection))
         {
-            if (reserveFromIiko.Order != null)
+            if (reserveFromCollection.Status == ReserveStatus.Closed)
             {
-                (reserveFromIiko.Order).Id.ToString();
-            }
-            if ((int)reserveFromCollection.Status == 2)
-            {
-                ReserveCollection.Remove(reserveFromCollection.Id);
+                reserveCollection.Remove(reserveFromCollection.Id);
             }
             if (reserveFromCollection.Order != null)
             {
                 reserveFromCollection.Order.Id.ToString();
             }
-            bool isOrderIdEqual = false;
-            if (reserveFromIiko.Order != null && reserveFromCollection.Order != null)
+            if (!reserveFromCollection.Equals(reserveFromIiko))
             {
-                isOrderIdEqual = reserveFromIiko.Order.Id.Equals(reserveFromCollection.Order.Id);
-            }
-            if (!reserveFromIiko.Client.Id.Equals(reserveFromCollection.Client.Id) || !reserveFromIiko.Client.Name.Equals(reserveFromCollection.Client.Name) || !ComparePhones(reserveFromCollection.Client.Phones.Select((IPhone p) => p.Value).ToList(), reserveFromIiko.Client.Phones.Select((IPhone p) => p.Value).ToList()) || !reserveFromIiko.EstimatedStartTime.Equals(reserveFromCollection.EstimatedStartTime) || !reserveFromIiko.Comment.Equals(reserveFromCollection.Comment) || reserveFromIiko.Status != reserveFromCollection.Status || !CompareTables(reserveFromCollection.Tables.Select((ITable t) => ((IEntity)t).Id).ToList(), reserveFromIiko.Tables.Select((ITable t) => ((IEntity)t).Id).ToList()) || !reserveFromIiko.GuestsCount.Equals(reserveFromCollection.GuestsCount) || !reserveFromIiko.Duration.Equals(reserveFromCollection.Duration) || !reserveFromIiko.ShouldRemind.Equals(reserveFromCollection.ShouldRemind && isOrderIdEqual))
-            {
-                ILog log = PluginContext.Log;
-                ReserveStatus status = reserveFromIiko.Status;
-                log.Info("--------------------------------------------------------------------------------------------");
-                log.Info($"Client Id:          {reserveFromIiko.Client.Id.Equals(reserveFromCollection.Client.Id)}");
-                log.Info($"Client Name:        {reserveFromIiko.Client.Name.Equals(reserveFromCollection.Client.Name)}");
-                log.Info($"Client Phones:      {reserveFromIiko.Client.Phones.Select((IPhone p) => p.Value).ToList().Equals(reserveFromCollection.Client.Phones.Select((IPhone p) => p.Value).ToList())}");
-                log.Info($"EstimatedStartTime: {reserveFromIiko.EstimatedStartTime.Equals(reserveFromCollection.EstimatedStartTime)}");
-                log.Info($"Comment:            {reserveFromIiko.Comment.Equals(reserveFromCollection.Comment)}");
-                log.Info($"Status:             {status.Equals((object)reserveFromCollection.Status)}");
-                log.Info($"Tables:             {CompareTables(reserveFromCollection.Tables.Select((ITable t) => t.Id).ToList(), reserveFromIiko.Tables.Select((ITable t) => t.Id).ToList())}");
-                log.Info($"GuestsCount:        {reserveFromIiko.GuestsCount.Equals(reserveFromCollection.GuestsCount)}");
-                log.Info($"Duration:           {reserveFromIiko.Duration.Equals(reserveFromCollection.Duration)}");
-                log.Info($"ShouldRemind:       {reserveFromIiko.ShouldRemind.Equals(reserveFromCollection.ShouldRemind)}");
-                log.Info($"Order Id:           {isOrderIdEqual}");
-                log.Info($"Curr reserve start time: {reserveFromCollection.EstimatedStartTime} | New reserve start time: {reserveFromIiko.EstimatedStartTime}");
-                log.Info("--------------------------------------------------------------------------------------------");
-                Reserve reserve2 = new Reserve
+                logger.LogReserve(reserveFromIiko);
+                Reserve reserve = new Reserve
                 {
                     Id = reserveFromIiko.Id,
                     Client = reserveFromIiko.Client,
@@ -68,9 +52,9 @@ internal class ReservesRepo
                     ShouldRemind = reserveFromIiko.ShouldRemind,
                     Order = reserveFromIiko.Order
                 };
-                UpdateReserve(reserve2);
-                ReserveCollection.Remove(((IEntity)reserveFromIiko).Id);
-                ReserveCollection.Add(((IEntity)reserveFromIiko).Id, reserve2);
+                UpdateReserve(reserve);
+                reserveCollection.Remove(reserveFromIiko.Id);
+                reserveCollection.Add(reserveFromIiko.Id, reserve);
             }
         }
         else
@@ -89,52 +73,10 @@ internal class ReservesRepo
                 ShouldRemind = reserveFromIiko.ShouldRemind,
                 Order = reserveFromIiko.Order
             };
-            ReserveCollection.Add(reserveFromIiko.Id, reserve);
+            reserveCollection.Add(reserveFromIiko.Id, reserve);
             UpdateReserve(reserve);
         }
     }
-    private bool CompareTables(List<Guid> oldTables, List<Guid> newTables)
-    {
-        bool result = true;
-        if (oldTables.Count == newTables.Count)
-        {
-            foreach (Guid ot in oldTables)
-            {
-                if (!newTables.Contains(ot))
-                {
-                    result = false;
-                    return result;
-                }
-            }
-        }
-        else
-        {
-            result = false;
-        }
-        return result;
-    }
-
-    private bool ComparePhones(List<string> oldPhones, List<string> newPhones)
-    {
-        bool result = true;
-        if (oldPhones.Count == newPhones.Count)
-        {
-            foreach (string op in oldPhones)
-            {
-                if (!newPhones.Contains(op))
-                {
-                    result = false;
-                    return result;
-                }
-            }
-        }
-        else
-        {
-            result = false;
-        }
-        return result;
-    }
-
     public void UpdateReserve(Reserve handledReservation)
     {
         const string startTimeFormat = "yyyy-MM-ddTHH:mm:sszzzz";
@@ -174,7 +116,7 @@ internal class ReservesRepo
         List<string> tableGuids = new List<string>();
         foreach (ITable _TableGuids in handledReservation.Tables)
         {
-            tableGuids.Add(((IEntity)_TableGuids).Id.ToString());
+            tableGuids.Add(_TableGuids.Id.ToString());
         }
         Guest guest = new Guest(handledReservation);
         ChangedReservation changedReservationstoSend = new ChangedReservation

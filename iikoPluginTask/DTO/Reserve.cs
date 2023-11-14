@@ -3,10 +3,11 @@ using Resto.Front.Api.Data.Orders;
 using Resto.Front.Api.Data.Organization.Sections;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace iikoPluginTask.DTO
 {
-    public class Reserve
+    public class Reserve : IEquatable<IReserve>
     {
         public Guid Id { get; set; }
 
@@ -29,5 +30,19 @@ namespace iikoPluginTask.DTO
         public TimeSpan Duration { get; set; }
 
         public bool ShouldRemind { get; set; }
+
+        public bool Equals(IReserve other)
+        {
+            return other.Client.Id.Equals(this.Client.Id)
+                && other.Client.Name.Equals(this.Client.Name)
+                && other.Client.Phones.SequenceEqual(Client.Phones)
+                && other.EstimatedStartTime.Equals(this.EstimatedStartTime)
+                && other.Comment.Equals(this.Comment)
+                && other.Status == this.Status
+                && other.Tables.SequenceEqual(Tables)
+                && other.GuestsCount.Equals(this.GuestsCount)
+                && other.Duration.Equals(this.Duration)
+                && other.ShouldRemind.Equals(this.ShouldRemind);
+        }
     }
 }
