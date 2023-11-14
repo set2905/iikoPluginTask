@@ -150,14 +150,14 @@ internal class ReservesRepo
             editSession.SetOrderType(orderType, (IOrderStub)(object)order);
             editSession.AddOrderGuest(handledReservation.Client.Name, (IOrderStub)(object)order);
             editSession.ChangeEstimatedOrderGuestsCount(handledReservation.GuestsCount, (IOrderStub)(object)order);
-            editSession.BindReserveToOrder((IReserveStub)(object)PluginContext.Operations.GetReserveById(handledReservation.Id), (IOrderStub)(object)order);
+            editSession.BindReserveToOrder(PluginContext.Operations.GetReserveById(handledReservation.Id), order);
             PluginContext.Operations.SubmitChanges(credentials, editSession);
             return;
         }
         string Status = null;
         string ClosingTime = null;
         string StartTime = ((!handledReservation.GuestsComingTime.HasValue) ? null : ((handledReservation.GuestsComingTime.Value < DateTime.Now) ? handledReservation.GuestsComingTime.Value.ToString(startTimeFormat) : DateTime.Now.AddSeconds(5.0).ToString(startTimeFormat)));
-        if ((int)handledReservation.Status == 0)
+        if (handledReservation.Status == ReserveStatus.New)
         {
             Status = "other";
         }
