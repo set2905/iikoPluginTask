@@ -1,4 +1,5 @@
-﻿using Resto.Front.Api;
+﻿using iikoPluginTask.DTO.Constructor;
+using Resto.Front.Api;
 using Resto.Front.Api.Data.Brd;
 using Resto.Front.Api.Data.Common;
 using System;
@@ -11,16 +12,20 @@ namespace iikoPluginTask
 {
     public class ReservePlugin : IFrontPlugin
     {
+        private WebSocketClient _webSocket;
         private Dictionary<Guid, DateTime> ReserveTimes { get; set; }
         private ReservesRepo reservesRepo { get; set; }
         public ReservePlugin()
         {
+
             PluginContext.Notifications.ReserveChanged.Subscribe(OnReserveChanged);
+
+            _webSocket = WebSocketClient.GetInstance();
+
         }
 
         public void Dispose()
         {
-            throw new NotImplementedException();
         }
 
         private void OnReserveChanged(EntityChangedEventArgs<IReserve> reserve)
@@ -40,24 +45,17 @@ namespace iikoPluginTask
                     }
                     if (!reserve.Entity.GuestsComingTime.HasValue || !(Math.Abs((reserve.Entity.GuestsComingTime.Value - DateTime.Now).TotalSeconds) < 2.5))
                     {
-                        //if (reserve.Entity.Order != null)
-                        //{
-                        //    _reservedOrders.Add(((IEntity)reserve.Entity.Order).Id);
-                        //}
-                        //ReservesWithCreationTime.AddOrUpdate(((IEntity)reserve.Entity).Id, DateTime.Now);
                         reservesRepo.AddOrUpdate(reserve.Entity);
                     }
                 }
                 else if ((int)reserve.Entity.Status != 2)
                 {
-                    //ReservesWithCreationTime.AddOrUpdate(((IEntity)reserve.Entity).Id, DateTime.Now);
                     reservesRepo.AddOrUpdate(reserve.Entity);
-                    //_timeLastReserve = DateTime.Now;
                 }
             }
             catch (Exception ex)
             {
-                PluginContext.Log.Error($"{ex}");
+                PluginContext.Log.Error($"{ex.Message}");
             }
         }
     }

@@ -179,21 +179,21 @@ internal class ReservesRepo
         Guest guest = new Guest(handledReservation);
         ChangedReservation changedReservationstoSend = new ChangedReservation
         {
-            guid = handledReservation.Id.ToString(),
-            date = handledReservation.EstimatedStartTime.ToString(startTimeFormat),
-            registerTime = DateTime.Now.ToString(startTimeFormat),
-            comingTime = StartTime,
-            closingTime = ClosingTime,
-            guest = guest,
-            duration = handledReservation.Duration.TotalMinutes.ToString(),
-            number = "1",
-            type = "reserve",
-            guestCount = handledReservation.GuestsCount.ToString(),
-            status = Status,
-            comment = handledReservation.Comment,
-            tablesGUIDs = tableGuids,
-            isRemind = IsRemind,
-            cancelReason = ""
+            Guid = handledReservation.Id.ToString(),
+            Date = handledReservation.EstimatedStartTime.ToString(startTimeFormat),
+            RegisterTime = DateTime.Now.ToString(startTimeFormat),
+            ComingTime = StartTime,
+            ClosingTime = ClosingTime,
+            Guest = guest,
+            Duration = handledReservation.Duration.TotalMinutes.ToString(),
+            Number = "1",
+            Type = "reserve",
+            GuestCount = handledReservation.GuestsCount.ToString(),
+            Status = Status,
+            Comment = handledReservation.Comment,
+            TablesGUIDs = tableGuids,
+            IsRemind = IsRemind,
+            CancelReason = ""
         };
         RpcRequestConstructor<ChangedReservation> ReserveChangedJson = new RpcRequestConstructor<ChangedReservation>("UpdateReserve", changedReservationstoSend);
         WebSocketClient.GetInstance().SendAndLog("UpdateReserve", ReserveChangedJson.ResultRequest);

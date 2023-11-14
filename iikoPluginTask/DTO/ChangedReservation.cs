@@ -4,34 +4,34 @@ namespace iikoPluginTask.DTO
 {
     public class ChangedReservation
     {
-        public string guid { get; set; }
+        public string Guid { get; set; }
 
-        public string date { get; set; }
+        public string Date { get; set; }
 
-        public string registerTime { get; set; }
+        public string RegisterTime { get; set; }
 
-        public string comingTime { get; set; }
+        public string ComingTime { get; set; }
 
-        public string closingTime { get; set; }
+        public string ClosingTime { get; set; }
 
-        public Guest guest { get; set; }
+        public Guest Guest { get; set; }
 
-        public string duration { get; set; }
+        public string Duration { get; set; }
 
-        public string number { get; set; }
+        public string Number { get; set; }
 
-        public string type { get; set; }
+        public string Type { get; set; }
 
-        public string guestCount { get; set; }
+        public string GuestCount { get; set; }
 
-        public string status { get; set; }
+        public string Status { get; set; }
 
-        public string comment { get; set; }
+        public string Comment { get; set; }
 
-        public List<string> tablesGUIDs { get; set; }
+        public List<string> TablesGUIDs { get; set; }
 
-        public string isRemind { get; set; }
+        public string IsRemind { get; set; }
 
-        public string cancelReason { get; set; }
+        public string CancelReason { get; set; }
     }
 }
