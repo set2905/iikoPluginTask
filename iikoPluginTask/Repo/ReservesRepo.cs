@@ -1,5 +1,4 @@
 ﻿using Resto.Front.Api.Data.Brd;
-using Resto.Front.Api.Data.Organization.Sections;
 using Resto.Front.Api;
 using System.Linq;
 using System.Collections.Generic;
@@ -11,16 +10,27 @@ using Resto.Front.Api.Editors.Stubs;
 using Resto.Front.Api.Editors;
 using iikoPluginTask.DTO.Constructor;
 using iikoPluginTask.Logging;
+using iikoPluginTask.Mocking;
 
 internal class ReservesRepo
 {
     private Dictionary<Guid, Reserve> reserveCollection;
     private PluginLogger logger;
+    private ReservationFaker reservationFaker;
 
     public ReservesRepo()
     {
         logger = new PluginLogger();
         reserveCollection = new Dictionary<Guid, Reserve>();
+        reservationFaker = new ReservationFaker();
+
+        var fakeReservations = reservationFaker.GetFakeReserves(10);
+        foreach (var fakeReservation in fakeReservations)
+        {
+            UpdateIikoReserve(fakeReservation);
+            IReserve reserveFromIiko = PluginContext.Operations.GetReserveById(fakeReservation.Id);
+            reserveCollection.Add(reserveFromIiko.Id, fakeReservation);
+        }
     }
 
     /// <summary>
@@ -63,11 +73,13 @@ internal class ReservesRepo
     private void UpdateIikoReserve(Reserve handledReservation)
     {
         const string startTimeFormat = "yyyy-MM-ddTHH:mm:sszzzz";
+        const string samplePin = "12344321";
+
         IReserve reserveFromIiko = PluginContext.Operations.GetReserveById(handledReservation.Id);
-        if (reserveFromIiko.Order == null && reserveFromIiko.Status != ReserveStatus.Closed)
+        if (reserveFromIiko!=null && reserveFromIiko.Order == null && reserveFromIiko.Status != ReserveStatus.Closed)
         {
             IEditSession editSession = PluginContext.Operations.CreateEditSession();
-            ICredentials credentials = PluginContext.Operations.AuthenticateByPin("12344321");
+            ICredentials credentials = PluginContext.Operations.AuthenticateByPin(samplePin);
             INewOrderStub order = editSession.CreateOrder(handledReservation.Tables, null);
             IOrderType orderType = (from t in PluginContext.Operations.GetOrderTypes()
                                     where t.OrderServiceType == OrderServiceTypes.Common

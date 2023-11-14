@@ -7,6 +7,9 @@ using System.Text;
 
 namespace iikoPluginTask.Logging
 {
+    /// <summary>
+    /// Логгер плагина
+    /// </summary>
     public class PluginLogger
     {
         public void LogReserve(IReserve reserveFromIiko)
