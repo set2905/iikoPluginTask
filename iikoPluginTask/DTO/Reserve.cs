@@ -9,6 +9,24 @@ namespace iikoPluginTask.DTO
 {
     public class Reserve : IEquatable<IReserve>
     {
+        public Reserve()
+        {
+        }
+
+        public Reserve(IReserve reserveFromIiko)
+        {
+            Id = reserveFromIiko.Id;
+            Client = reserveFromIiko.Client;
+            GuestsComingTime = reserveFromIiko.GuestsComingTime;
+            EstimatedStartTime = reserveFromIiko.EstimatedStartTime;
+            Comment = reserveFromIiko.Comment;
+            Status = reserveFromIiko.Status;
+            Tables = reserveFromIiko.Tables;
+            GuestsCount = reserveFromIiko.GuestsCount;
+            Duration = reserveFromIiko.Duration;
+            ShouldRemind = reserveFromIiko.ShouldRemind;
+            Order = reserveFromIiko.Order;
+        }
         public Guid Id { get; set; }
 
         public IClient Client { get; set; }

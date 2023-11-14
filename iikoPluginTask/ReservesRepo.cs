@@ -38,20 +38,7 @@ internal class ReservesRepo
             if (!reserveFromCollection.Equals(reserveFromIiko))
             {
                 logger.LogReserve(reserveFromIiko);
-                Reserve reserve = new Reserve
-                {
-                    Id = reserveFromIiko.Id,
-                    Client = reserveFromIiko.Client,
-                    GuestsComingTime = reserveFromIiko.GuestsComingTime,
-                    EstimatedStartTime = reserveFromIiko.EstimatedStartTime,
-                    Comment = reserveFromIiko.Comment,
-                    Status = reserveFromIiko.Status,
-                    Tables = reserveFromIiko.Tables,
-                    GuestsCount = reserveFromIiko.GuestsCount,
-                    Duration = reserveFromIiko.Duration,
-                    ShouldRemind = reserveFromIiko.ShouldRemind,
-                    Order = reserveFromIiko.Order
-                };
+                Reserve reserve = new Reserve(reserveFromIiko);
                 UpdateReserve(reserve);
                 reserveCollection.Remove(reserveFromIiko.Id);
                 reserveCollection.Add(reserveFromIiko.Id, reserve);
@@ -59,20 +46,7 @@ internal class ReservesRepo
         }
         else
         {
-            Reserve reserve = new Reserve
-            {
-                Id = reserveFromIiko.Id,
-                Client = reserveFromIiko.Client,
-                GuestsComingTime = reserveFromIiko.GuestsComingTime,
-                EstimatedStartTime = reserveFromIiko.EstimatedStartTime,
-                Comment = reserveFromIiko.Comment,
-                Status = reserveFromIiko.Status,
-                Tables = reserveFromIiko.Tables,
-                GuestsCount = reserveFromIiko.GuestsCount,
-                Duration = reserveFromIiko.Duration,
-                ShouldRemind = reserveFromIiko.ShouldRemind,
-                Order = reserveFromIiko.Order
-            };
+            Reserve reserve = new Reserve(reserveFromIiko);
             reserveCollection.Add(reserveFromIiko.Id, reserve);
             UpdateReserve(reserve);
         }
