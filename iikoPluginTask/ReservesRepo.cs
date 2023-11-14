@@ -10,6 +10,7 @@ using Resto.Front.Api.Data.Organization;
 using Resto.Front.Api.Data.Security;
 using Resto.Front.Api.Editors.Stubs;
 using Resto.Front.Api.Editors;
+using iikoPluginTask.DTO.Constructor;
 
 internal class ReservesRepo
 {
@@ -134,62 +135,62 @@ internal class ReservesRepo
         return result;
     }
 
-    public void UpdateReserve(Reserve handledReserveation)
+    public void UpdateReserve(Reserve handledReservation)
     {
         const string startTimeFormat = "yyyy-MM-ddTHH:mm:sszzzz";
-        IReserve reserveFromIiko = PluginContext.Operations.GetReserveById(handledReserveation.Id);
+        IReserve reserveFromIiko = PluginContext.Operations.GetReserveById(handledReservation.Id);
         if (reserveFromIiko.Order == null && reserveFromIiko.Status != ReserveStatus.Closed)
         {
             IEditSession editSession = PluginContext.Operations.CreateEditSession();
             ICredentials credentials = PluginContext.Operations.AuthenticateByPin("12344321");
-            INewOrderStub order = editSession.CreateOrder(handledReserveation.Tables, null);
+            INewOrderStub order = editSession.CreateOrder(handledReservation.Tables, null);
             IOrderType orderType = (from t in PluginContext.Operations.GetOrderTypes()
                                     where (int)t.OrderServiceType == 1
                                     select t).FirstOrDefault();
             editSession.SetOrderType(orderType, (IOrderStub)(object)order);
-            editSession.AddOrderGuest(handledReserveation.Client.Name, (IOrderStub)(object)order);
-            editSession.ChangeEstimatedOrderGuestsCount(handledReserveation.GuestsCount, (IOrderStub)(object)order);
-            editSession.BindReserveToOrder((IReserveStub)(object)PluginContext.Operations.GetReserveById(handledReserveation.Id), (IOrderStub)(object)order);
+            editSession.AddOrderGuest(handledReservation.Client.Name, (IOrderStub)(object)order);
+            editSession.ChangeEstimatedOrderGuestsCount(handledReservation.GuestsCount, (IOrderStub)(object)order);
+            editSession.BindReserveToOrder((IReserveStub)(object)PluginContext.Operations.GetReserveById(handledReservation.Id), (IOrderStub)(object)order);
             PluginContext.Operations.SubmitChanges(credentials, editSession);
             return;
         }
         string Status = null;
         string ClosingTime = null;
-        string StartTime = ((!handledReserveation.GuestsComingTime.HasValue) ? null : ((handledReserveation.GuestsComingTime.Value < DateTime.Now) ? handledReserveation.GuestsComingTime.Value.ToString(startTimeFormat) : DateTime.Now.AddSeconds(5.0).ToString(startTimeFormat)));
-        if ((int)handledReserveation.Status == 0)
+        string StartTime = ((!handledReservation.GuestsComingTime.HasValue) ? null : ((handledReservation.GuestsComingTime.Value < DateTime.Now) ? handledReservation.GuestsComingTime.Value.ToString(startTimeFormat) : DateTime.Now.AddSeconds(5.0).ToString(startTimeFormat)));
+        if ((int)handledReservation.Status == 0)
         {
             Status = "other";
         }
-        else if ((int)handledReserveation.Status == 1)
+        else if ((int)handledReservation.Status == 1)
         {
             Status = "come";
         }
-        else if ((int)handledReserveation.Status == 2)
+        else if ((int)handledReservation.Status == 2)
         {
             Status = "cancel";
         }
-        string IsRemind = ((!handledReserveation.ShouldRemind) ? "0" : "1");
-        _ = handledReserveation.Client.CardNumber;
+        string IsRemind = ((!handledReservation.ShouldRemind) ? "0" : "1");
+        _ = handledReservation.Client.CardNumber;
         List<string> tableGuids = new List<string>();
-        foreach (ITable _TableGuids in handledReserveation.Tables)
+        foreach (ITable _TableGuids in handledReservation.Tables)
         {
             tableGuids.Add(((IEntity)_TableGuids).Id.ToString());
         }
-        Guest guest = Helpers.GetGuestInfo(handledReserveation);
+        Guest guest = new Guest(handledReservation);
         ChangedReservation changedReservationstoSend = new ChangedReservation
         {
-            guid = handledReserveation.Id.ToString(),
-            date = handledReserveation.EstimatedStartTime.ToString(startTimeFormat),
+            guid = handledReservation.Id.ToString(),
+            date = handledReservation.EstimatedStartTime.ToString(startTimeFormat),
             registerTime = DateTime.Now.ToString(startTimeFormat),
             comingTime = StartTime,
             closingTime = ClosingTime,
             guest = guest,
-            duration = handledReserveation.Duration.TotalMinutes.ToString(),
+            duration = handledReservation.Duration.TotalMinutes.ToString(),
             number = "1",
             type = "reserve",
-            guestCount = handledReserveation.GuestsCount.ToString(),
+            guestCount = handledReservation.GuestsCount.ToString(),
             status = Status,
-            comment = handledReserveation.Comment,
+            comment = handledReservation.Comment,
             tablesGUIDs = tableGuids,
             isRemind = IsRemind,
             cancelReason = ""
