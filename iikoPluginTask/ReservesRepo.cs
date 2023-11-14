@@ -70,16 +70,15 @@ internal class ReservesRepo
             ICredentials credentials = PluginContext.Operations.AuthenticateByPin("12344321");
             INewOrderStub order = editSession.CreateOrder(handledReservation.Tables, null);
             IOrderType orderType = (from t in PluginContext.Operations.GetOrderTypes()
-                                    where (int)t.OrderServiceType == 1
+                                    where t.OrderServiceType == OrderServiceTypes.Common
                                     select t).FirstOrDefault();
-            editSession.SetOrderType(orderType, (IOrderStub)(object)order);
-            editSession.AddOrderGuest(handledReservation.Client.Name, (IOrderStub)(object)order);
-            editSession.ChangeEstimatedOrderGuestsCount(handledReservation.GuestsCount, (IOrderStub)(object)order);
+            editSession.SetOrderType(orderType, order);
+            editSession.AddOrderGuest(handledReservation.Client.Name, order);
+            editSession.ChangeEstimatedOrderGuestsCount(handledReservation.GuestsCount, order);
             editSession.BindReserveToOrder(PluginContext.Operations.GetReserveById(handledReservation.Id), order);
             PluginContext.Operations.SubmitChanges(credentials, editSession);
             return;
         }
-        string status = null;
         string startTime;
         if (handledReservation.GuestsComingTime.Value < DateTime.Now)
         {
@@ -90,6 +89,7 @@ internal class ReservesRepo
             startTime=(!handledReservation.GuestsComingTime.HasValue) ? null : (DateTime.Now.AddSeconds(5.0).ToString(startTimeFormat));
         }
 
+        string status;
         switch (handledReservation.Status)
         {
             case ReserveStatus.New:
@@ -101,32 +101,22 @@ internal class ReservesRepo
             case ReserveStatus.Closed:
                 status = "cancel";
                 break;
+            default:
+                status=null;
+                break;
         }
 
         string isRemind = (!handledReservation.ShouldRemind) ? "0" : "1";
-        List<string> tableGuids = new List<string>();
-        foreach (ITable table in handledReservation.Tables)
-            tableGuids.Add(table.Id.ToString());
-
+        List<string> tableGuids = handledReservation.Tables.ToList().ConvertAll(x => x.Id.ToString());
         Guest guest = new Guest(handledReservation);
-        ChangedReservation changedReservationstoSend = new ChangedReservation
-        {
-            Guid = handledReservation.Id.ToString(),
-            Date = handledReservation.EstimatedStartTime.ToString(startTimeFormat),
-            RegisterTime = DateTime.Now.ToString(startTimeFormat),
-            ComingTime = startTime,
-            ClosingTime = null,
-            Guest = guest,
-            Duration = handledReservation.Duration.TotalMinutes.ToString(),
-            Number = "1",
-            Type = "reserve",
-            GuestCount = handledReservation.GuestsCount.ToString(),
-            Status = status,
-            Comment = handledReservation.Comment,
-            TablesGUIDs = tableGuids,
-            IsRemind = isRemind,
-            CancelReason = ""
-        };
+        ChangedReservation changedReservationstoSend = new ChangedReservation(
+            handledReservation,
+            startTime,
+            startTimeFormat,
+            guest,
+            status,
+            tableGuids,
+            isRemind);
         RpcRequestConstructor<ChangedReservation> ReserveChangedJson = new RpcRequestConstructor<ChangedReservation>("UpdateIikoReserve", changedReservationstoSend);
         WebSocketClient.GetInstance().SendAndLog("UpdateIikoReserve", ReserveChangedJson.ResultRequest);
     }
