@@ -153,8 +153,8 @@ internal class ReservesRepo
             PluginContext.Operations.SubmitChanges(credentials, editSession);
             return;
         }
-        string Status;
-        string ClosingTime;
+        string Status = null;
+        string ClosingTime = null;
         string StartTime = ((!handledReserveation.GuestsComingTime.HasValue) ? null : ((handledReserveation.GuestsComingTime.Value < DateTime.Now) ? handledReserveation.GuestsComingTime.Value.ToString(startTimeFormat) : DateTime.Now.AddSeconds(5.0).ToString(startTimeFormat)));
         if ((int)handledReserveation.Status == 0)
         {
@@ -176,7 +176,7 @@ internal class ReservesRepo
             tableGuids.Add(((IEntity)_TableGuids).Id.ToString());
         }
         Guest guest = Helpers.GetGuestInfo(handledReserveation);
-        ChangedReservationstoSend changedReservationstoSend = new ChangedReservationstoSend
+        ChangedReservation changedReservationstoSend = new ChangedReservation
         {
             guid = handledReserveation.Id.ToString(),
             date = handledReserveation.EstimatedStartTime.ToString(startTimeFormat),
@@ -194,7 +194,7 @@ internal class ReservesRepo
             isRemind = IsRemind,
             cancelReason = ""
         };
-        RpcRequestConstructor<ChangedReservationstoSend> ReserveChangedJson = new RpcRequestConstructor<ChangedReservationstoSend>("UpdateReserve", changedReservationstoSend);
+        RpcRequestConstructor<ChangedReservation> ReserveChangedJson = new RpcRequestConstructor<ChangedReservation>("UpdateReserve", changedReservationstoSend);
         WebSocketClient.GetInstance().SendAndLog("UpdateReserve", ReserveChangedJson.ResultRequest);
     }
 }
