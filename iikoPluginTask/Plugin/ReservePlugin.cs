@@ -12,6 +12,7 @@ namespace iikoPluginTask
     public class ReservePlugin : IFrontPlugin
     {
         private Dictionary<Guid, DateTime> ReserveTimes { get; set; }
+        private ReservesRepo reservesRepo { get; set; }
         public ReservePlugin()
         {
             PluginContext.Notifications.ReserveChanged.Subscribe(OnReserveChanged);
@@ -35,7 +36,7 @@ namespace iikoPluginTask
                     DateTime creationTime = ReserveTimes[(reserve.Entity).Id];
                     if ((DateTime.Now - creationTime).Seconds > 3)
                     {
-                        _partialReserveNotification.AddOrUpdate(reserve.Entity);
+                        reservesRepo.AddOrUpdate(reserve.Entity);
                     }
                     if (!reserve.Entity.GuestsComingTime.HasValue || !(Math.Abs((reserve.Entity.GuestsComingTime.Value - DateTime.Now).TotalSeconds) < 2.5))
                     {
@@ -44,13 +45,13 @@ namespace iikoPluginTask
                             _reservedOrders.Add(((IEntity)reserve.Entity.Order).Id);
                         }
                         ReservesWithCreationTime.AddOrUpdate(((IEntity)reserve.Entity).Id, DateTime.Now);
-                        _partialReserveNotification.AddOrUpdate(reserve.Entity);
+                        reservesRepo.AddOrUpdate(reserve.Entity);
                     }
                 }
                 else if ((int)reserve.Entity.Status != 2)
                 {
                     ReservesWithCreationTime.AddOrUpdate(((IEntity)reserve.Entity).Id, DateTime.Now);
-                    _partialReserveNotification.AddOrUpdate(reserve.Entity);
+                    reservesRepo.AddOrUpdate(reserve.Entity);
                     _timeLastReserve = DateTime.Now;
                 }
             }

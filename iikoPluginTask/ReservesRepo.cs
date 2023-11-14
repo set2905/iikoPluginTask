@@ -136,15 +136,9 @@ internal class ReservesRepo
 
     public void UpdateReserve(Reserve handledReserveation)
     {
-        //IL_001d: Unknown result type (might be due to invalid IL or missing references)
-        //IL_0023: Invalid comparison between Unknown and I4
-        //IL_015b: Unknown result type (might be due to invalid IL or missing references)
-        //IL_016b: Unknown result type (might be due to invalid IL or missing references)
-        //IL_0171: Invalid comparison between Unknown and I4
-        //IL_017c: Unknown result type (might be due to invalid IL or missing references)
-        //IL_0182: Invalid comparison between Unknown and I4
+        const string startTimeFormat = "yyyy-MM-ddTHH:mm:sszzzz";
         IReserve reserveFromIiko = PluginContext.Operations.GetReserveById(handledReserveation.Id);
-        if (reserveFromIiko.Order == null && (int)reserveFromIiko.Status != 2)
+        if (reserveFromIiko.Order == null && reserveFromIiko.Status != ReserveStatus.Closed)
         {
             IEditSession editSession = PluginContext.Operations.CreateEditSession();
             ICredentials credentials = PluginContext.Operations.AuthenticateByPin("12344321");
@@ -159,9 +153,9 @@ internal class ReservesRepo
             PluginContext.Operations.SubmitChanges(credentials, editSession);
             return;
         }
-        string Status = null;
-        string ClosingTime = null;
-        string StartTime = ((!handledReserveation.GuestsComingTime.HasValue) ? null : ((handledReserveation.GuestsComingTime.Value < DateTime.Now) ? handledReserveation.GuestsComingTime.Value.ToString("yyyy-MM-ddTHH:mm:sszzzz") : DateTime.Now.AddSeconds(5.0).ToString("yyyy-MM-ddTHH:mm:sszzzz")));
+        string Status;
+        string ClosingTime;
+        string StartTime = ((!handledReserveation.GuestsComingTime.HasValue) ? null : ((handledReserveation.GuestsComingTime.Value < DateTime.Now) ? handledReserveation.GuestsComingTime.Value.ToString(startTimeFormat) : DateTime.Now.AddSeconds(5.0).ToString(startTimeFormat)));
         if ((int)handledReserveation.Status == 0)
         {
             Status = "other";
@@ -185,8 +179,8 @@ internal class ReservesRepo
         ChangedReservationstoSend changedReservationstoSend = new ChangedReservationstoSend
         {
             guid = handledReserveation.Id.ToString(),
-            date = handledReserveation.EstimatedStartTime.ToString("yyyy-MM-ddTHH:mm:sszzzz"),
-            registerTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:sszzzz"),
+            date = handledReserveation.EstimatedStartTime.ToString(startTimeFormat),
+            registerTime = DateTime.Now.ToString(startTimeFormat),
             comingTime = StartTime,
             closingTime = ClosingTime,
             guest = guest,
