@@ -142,7 +142,7 @@ internal class ReservesRepo
         {
             IEditSession editSession = PluginContext.Operations.CreateEditSession();
             ICredentials credentials = PluginContext.Operations.AuthenticateByPin("12344321");
-            INewOrderStub order = editSession.CreateOrder(handledReserveation.Tables, (IUser)null);
+            INewOrderStub order = editSession.CreateOrder(handledReserveation.Tables, null);
             IOrderType orderType = (from t in PluginContext.Operations.GetOrderTypes()
                                     where (int)t.OrderServiceType == 1
                                     select t).FirstOrDefault();
